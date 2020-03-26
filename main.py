@@ -78,11 +78,9 @@ def main():
     results = []
     for i in range(len(model.docvecs)):
         docvec = model.docvecs[i]
-        sum_sqr = 0
-        for a, b in zip(docvec, query_vec):
-            sum_sqr += (int(a) - int(b)) ** 2
-        distance = math.sqrt(sum_sqr)
-        results.append((i, documents[i], distance))
+        similarity = get_cos(docvec, query_vec)
+        results.append((i, documents[i], similarity))
+
     print('for "', ' '.join(query_list), '" by me')
     for i, text, similarity in sorted(results, key=lambda d: -d[2]):
         print(i, text, similarity)
@@ -95,6 +93,11 @@ def main():
         print(id, documents[id], sim)
 
 
+def get_cos(a, b):
+    from numpy import dot
+    from numpy.linalg import norm
+
+    return dot(a, b) / (norm(a) * norm(b))
 
 if __name__ == '__main__':
     main()
