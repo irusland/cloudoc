@@ -1,14 +1,7 @@
-r"""
-Similarity Queries
-==================
-
-Demonstrates querying a corpus for similar documents.
-"""
-
 import logging
 import time
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+# logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 from collections import defaultdict
 from gensim import corpora
@@ -22,8 +15,8 @@ documents = [
     "The generation of random binary unordered trees",
     "The intersection graph of paths in trees",
     "Graph minors IV Widths of trees and well quasi ordering",
-    "Human computer interaction Graph minors A survey human computer "
-    "interaction",
+    "Human computer interaction Graph minors A survey human computer",
+    "interaction with man",
     "human with the computer",
 ]
 
@@ -53,19 +46,20 @@ from gensim import models
 lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=2)
 
 doc = "measurement of user relation"
+print(f'for query "{doc}"')
 vec_bow = dictionary.doc2bow(doc.lower().split())
 vec_lsi = lsi[vec_bow]  # convert the query to LSI space
-print(vec_lsi)
+# print(vec_lsi)
 
 from gensim import similarities
-index = similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
+index = similarities.MatrixSimilarity(lsi[corpus])
 
-index.save('/tmp/deerwester.index')
-index = similarities.MatrixSimilarity.load('/tmp/deerwester.index')
+# index.save('/tmp/deerwester.index')
+# index = similarities.MatrixSimilarity.load('/tmp/deerwester.index')
 
 sims = index[vec_lsi]  # perform a similarity query against the corpus
-print(doc)
-print(list(enumerate(sims)))  # print (document_number, document_similarity) 2-tuples
+# print(doc)
+# print(list(enumerate(sims)))
 
 time.sleep(0.1)
 sims = sorted(enumerate(sims), key=lambda item: -item[1])
