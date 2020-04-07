@@ -12,8 +12,12 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from numpy.linalg import inv
+from numpy import dot, concatenate
+
+
 # todo change here need retraining model! loaded will contain old M
-M = 20
+M = 5
 
 
 class Corpus:
@@ -201,26 +205,18 @@ class DataOwner:
                     DV1[i][vp] = DV[i][vp]
                     DV2[i][vp] = DV[i][vp]
             # Secure index
-            I[i] = np.concatenate(
-                (np.dot(np.array(DV1[i]), SK.M1.T),
-                 np.dot(np.array(DV2[i]), SK.M2.T)))
+            I[i] = concatenate((dot(np.array(DV1[i]), SK.M1.T),
+                                dot(np.array(DV2[i]), SK.M2.T)))
 
             # Encrypt documents
             D̃[i] = SK.encrypt(D[i].encode())
 
-        self.global_DV1 = np.array(DV1)
-        self.global_DV2 = np.array(DV2)
+            self.global_DV1 = np.array(DV1)
+            self.global_DV2 = np.array(DV2)
+
         # TODO Outsources I, D̃ to CS
         #      Outsources SK, Model to DU
         return (I, D̃)
-
-    def search(self, Vq, k):
-        RList = []
-        for i in range(len(self.DV)):
-            similarity = get_score(Vq, self.DV[i])
-            RList.append((self.D[i], i, similarity))
-
-        return [(d, s) for d, _, s in sorted(RList, key=lambda d: -d[2])][:k]
 
 
 class DataUser:
@@ -245,7 +241,6 @@ class DataUser:
         """
         # TODO Normalize
         self.Vq = model.infer_vector(self.Q)
-        self.Vq = self.Vq / np.linalg.norm(self.Vq)
 
         # Split
         Vq1 = [None] * M
@@ -257,14 +252,11 @@ class DataUser:
             if SK.S[j] == 1:
                 Vq1[j] = Vq2[j] = self.Vq[j]
 
-        # Encrypts
-        Ṽq1 = np.dot(np.array(Vq1), np.linalg.inv(SK.M1))
-        Ṽq2 = np.dot(np.array(Vq2), np.linalg.inv(SK.M2))
+        Ṽq = concatenate((dot(np.array(Vq1), inv(SK.M1)),
+                          dot(np.array(Vq2), inv(SK.M2))))
 
         self.global_Vq1 = np.array(Vq1)
         self.global_Vq2 = np.array(Vq2)
-
-        Ṽq = np.concatenate((Ṽq1, Ṽq2))
         return Ṽq
 
     def decrypt(self, RList: list, SK: SecuredKey):
@@ -304,6 +296,13 @@ def main():
     CS = CloudServer()
     k = 3
 
+    # TODO FORMULA
+    #   dot(dot(Vq1, np.linalg.inv(M1)),
+    #       dot(DV1, M1.T))
+    #   +
+    #   dot(dot(Vq2, np.linalg.inv(M2)),
+    #       dot(DV2, M2.T))
+
     SK = DO.GenKey()
     print(SK.S)
     # print(SK.M1, SK.M2)
@@ -322,25 +321,28 @@ def main():
     print(result)
 
 
-    Vq = DO.model.infer_vector(DU.Q)
-    RListDO = CS.SSearch(D̃, DV, Vq, k)
-    result = DU.decrypt(RListDO, SK)
+    RList = []
+    for i in range(len(DV)):
+        Vqc = np.concatenate((DU.global_Vq1, DU.global_Vq2))
+        DVc = np.concatenate((DO.global_DV1[i], DO.global_DV2[i]))
+        similarity = get_score(Vqc, DVc)
+        RList.append((DO.D[i], i, similarity))
+
+    RList = [(d, s) for d, _, s in sorted(RList, key=lambda d: -d[2])][:k]
+    print(RList)
+
+
+    Rlist_original = CS.SSearch(D̃, DV, DO.model.infer_vector(DU.Q), k)
+    result = DU.decrypt(Rlist_original, SK)
     print(result)
 
-    Rlist_original = DO.search(DO.model.infer_vector(DU.Q), k)
-    print(Rlist_original)
-
-    print(DO.model.infer_vector(DU.Q))
-    print(DO.model.infer_vector(DU.Q))
-    print(DO.model.infer_vector(DU.Q))
-    print(DO.model.infer_vector(DU.Q))
+    Rlist_original = CS.SSearch(D̃, DV, DO.model.infer_vector(DU.Q), k)
+    result = DU.decrypt(Rlist_original, SK)
+    print(result)
 
 
 def get_score(a, b):
-    from numpy import dot
-    from numpy.linalg import norm
-
-    return dot(a, b) / (norm(a) * norm(b))
+    return dot(a, b)
 
 
 if __name__ == '__main__':
