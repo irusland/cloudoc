@@ -1,10 +1,15 @@
+import json
+import logging
 import os
 import base64
 import random
 
+import gensim
 import numpy as np
+from gensim.models import KeyedVectors
 
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+from gensim.test.utils import common_texts
 from nltk.tokenize import word_tokenize
 
 from cryptography.fernet import Fernet
@@ -12,57 +17,77 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from numpy.linalg import inv
+from numpy.linalg import inv, norm
 from numpy import dot, concatenate
 
-
 # todo change here need retraining model! loaded will contain old M
-M = 5
+from definitions import ROOT_DIR, TXT_DIR
+
+M = 10
 
 
 class Corpus:
     FILENAME = "word2vec.model"
     RETRAIN = False
+    SAVE = True
+
     # Needs to be a large data set
-    DOCUMENTS = [
-        "Human machine interface for lab abc computer applications",
-        "A survey of user opinion of computer system response time",
-        "The EPS user interface management system",
-        "System and human system engineering testing of EPS",
-        "Relation of user perceived response time to error measurement",
-        "The generation of random binary unordered trees",
-        "The intersection graph of paths in trees",
-        "Graph minors IV Widths of trees and well quasi ordering",
-        "Human computer interaction Graph minors A survey human computer",
-        "interaction with man",
-        "human practice with the computer",
-        "kitesurfing is a beautiful sport to practice",
-        "kite is a flying item",
-        "you can also use foil board with kite",
-    ]
+    # DOCUMENTS = [
+    #     "Human machine interface for lab abc computer applications",
+    #     "A survey of user opinion of computer system response time",
+    #     "The EPS user interface management system",
+    #     "System and human system engineering testing of EPS",
+    #     "Relation of user perceived response time to error measurement",
+    #     "The generation of random binary unordered trees",
+    #     "The intersection graph of paths in trees",
+    #     "Graph minors IV Widths of trees and well quasi ordering",
+    #     "Human computer interaction Graph minors A survey human computer",
+    #     "interaction with man",
+    #     "human practice with the computer",
+    #     "kitesurfing is a beautiful sport to practice",
+    #     "kite is a flying item",
+    #     "you can also use foil board with kite",
+    # ]
 
     def __init__(self):
+        logging.basicConfig(format="%(levelname)s - %(asctime)s: %(message)s",
+                            datefmt='%H:%M:%S', level=logging.INFO)
+
         if os.path.exists(self.FILENAME) and not self.RETRAIN:
             self.model = Doc2Vec.load(self.FILENAME)
             print("Loaded from ", self.FILENAME)
         else:
-            tagged_data = [
-                TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)])
-                for i, _d in enumerate(self.DOCUMENTS)]
-            self.model = Doc2Vec(size=M,
-                                 window=1,
-                                 min_count=1,
-                                 workers=8,
-                                 alpha=0.025,
-                                 min_alpha=0.01,
-                                 dm=0,
-                                 negative=0)  # negative to avoid
-                                              # randomisation of infervector
-            self._train(100, tagged_data)
+            documents = []
+            for address, dirs, files in os.walk(TXT_DIR):
+                for file in files:
+                    path = os.path.join(address, file)
+                    print(f'Processing {path}')
+                    with open(path) as f:
+                        txt = f.read()
+                        # documents.append(gensim.utils.simple_preprocess(txt))
+                        documents.append(
+                            TaggedDocument(
+                                words=gensim.utils.simple_preprocess(txt),
+                                tags=[file]))
+
+            self.model = Doc2Vec(documents,
+                                 size=M,
+                                 window=10,
+                                 min_count=2,
+                                 workers=4)  # negative=0 to avoid
+                                               # randomisation of infervector
+
+            # self.model.build_vocab(documents)
+            self.model.train(documents, total_examples=self.model.corpus_count,
+                             epochs=21)
+            # self._train(10, documents)
             print("Model trained")
 
-        self.model.save(self.FILENAME)
-        print("Model Saved ", self.FILENAME)
+        if self.SAVE:
+            self.model.save(self.FILENAME)
+            print("Model Saved ", self.FILENAME)
+        else:
+            print("Model NOT Saved")
 
     def _train(self, epochs, tagged_data):
         self.model.build_vocab(tagged_data)
@@ -84,6 +109,7 @@ class SecuredKey:
     """
     SK is only shared by DU but protected from CS
     """
+
     def __init__(self):
         # randomly generated m-bit vector
         self.S: list = None
@@ -107,22 +133,13 @@ class SecuredKey:
 class DataOwner:
     def __init__(self):
         # The document set of n documents
-        self.D = [
-            "Human machine interface for lab abc computer applications",
-            "A survey of user opinion of computer system response time",
-            "The EPS user interface management system",
-            "System and human system engineering testing of EPS",
-            "Relation of user perceived response time to error measurement",
-            "The generation of random binary unordered trees",
-            "The intersection graph of paths in trees",
-            "Graph minors IV Widths of trees and well quasi ordering",
-            "Human computer interaction Graph minors A survey human computer",
-            "interaction with man",
-            "human practice with the computer",
-            "kitesurfing is a beautiful sport to practice",
-            "kite is a flying item",
-            "you can also use foil board with kite",
-        ]
+        self.D = []
+        for address, dirs, files in os.walk(TXT_DIR):
+            for file in files:
+                path = os.path.join(address, file)
+                with open(path) as f:
+                    txt = f.read()
+                    self.D.append(txt)
 
         # The encrypted document set
         self.D̃ = None
@@ -151,7 +168,7 @@ class DataOwner:
 
         for d in D:
             v = self.model.infer_vector(d.split(' '))
-            self.DV.append(v / np.linalg.norm(v))
+            self.DV.append(v / norm(v))
         return self.DV
 
     def GenSVec(self):
@@ -197,6 +214,7 @@ class DataOwner:
             # Separate vectors
             DV1[i] = [.0] * M
             DV2[i] = [.0] * M
+
             for vp in range(self.m):
                 if SK.S[vp] == 1:
                     DV1[i][vp] = random.random()
@@ -204,15 +222,17 @@ class DataOwner:
                 if SK.S[vp] == 0:
                     DV1[i][vp] = DV[i][vp]
                     DV2[i][vp] = DV[i][vp]
+
+            DV1[i] = np.array(DV1[i])
+            DV2[i] = np.array(DV2[i])
+
+            DV1S = dot(DV1[i], SK.M1.T)
+            DV2S = dot(DV2[i], SK.M2.T)
             # Secure index
-            I[i] = concatenate((dot(np.array(DV1[i]), SK.M1.T),
-                                dot(np.array(DV2[i]), SK.M2.T)))
+            I[i] = concatenate((DV1S, DV2S))
 
             # Encrypt documents
             D̃[i] = SK.encrypt(D[i].encode())
-
-            self.global_DV1 = np.array(DV1)
-            self.global_DV2 = np.array(DV2)
 
         # TODO Outsources I, D̃ to CS
         #      Outsources SK, Model to DU
@@ -221,7 +241,7 @@ class DataOwner:
 
 class DataUser:
     def __init__(self):
-        query = 'kite is a sport'
+        query = 'story'
 
         # The ranked search with multiple queried keywords
         self.Q = query.split(' ')
@@ -241,6 +261,7 @@ class DataUser:
         """
         # TODO Normalize
         self.Vq = model.infer_vector(self.Q)
+        self.Vq = self.Vq / norm(self.Vq)
 
         # Split
         Vq1 = [None] * M
@@ -252,17 +273,20 @@ class DataUser:
             if SK.S[j] == 1:
                 Vq1[j] = Vq2[j] = self.Vq[j]
 
-        Ṽq = concatenate((dot(np.array(Vq1), inv(SK.M1)),
-                          dot(np.array(Vq2), inv(SK.M2))))
+        Vq1 = np.array(Vq1)
+        Vq2 = np.array(Vq2)
 
-        self.global_Vq1 = np.array(Vq1)
-        self.global_Vq2 = np.array(Vq2)
+        Vq1S = dot(Vq1, inv(SK.M1))
+        Vq2S = dot(Vq2, inv(SK.M2))
+
+        Ṽq = concatenate((Vq1S, Vq2S))
+
         return Ṽq
 
     def decrypt(self, RList: list, SK: SecuredKey):
         r = []
         for d, s in RList:
-            r.append((SK.decrypt(d).decode(), s))
+            r.append((s, SK.decrypt(d).decode()))
         return r
 
 
@@ -287,7 +311,9 @@ class CloudServer:
             similarity = get_score(Ṽq, I[i])
             RList.append((D̃[i], i, similarity))
 
-        return [(d, s) for d, _, s in sorted(RList, key=lambda d: -d[2])][:k]
+        return [(d, s)
+                for d, _, s in
+                sorted(RList, key=lambda d: -d[2])][:k if k else len(D̃)]
 
 
 def main():
@@ -295,20 +321,13 @@ def main():
     DU = DataUser()
     CS = CloudServer()
     k = 3
-
-    # TODO FORMULA
-    #   dot(dot(Vq1, np.linalg.inv(M1)),
-    #       dot(DV1, M1.T))
-    #   +
-    #   dot(dot(Vq2, np.linalg.inv(M2)),
-    #       dot(DV2, M2.T))
-
+    print(f'Query "{" ".join(DU.Q)}"')
     SK = DO.GenKey()
-    print(SK.S)
+    print(*SK.S)
     # print(SK.M1, SK.M2)
 
     DV = DO.DSInfer(DO.D)
-    # print(DV)
+    print(*DO.model.infer_vector(DU.Q))
 
     I, D̃ = DO.EncData(SK, DV, DO.D)
     # print(I, D̃)
@@ -318,27 +337,16 @@ def main():
 
     RListDU = CS.SSearch(D̃, I, Ṽq, k)
     result = DU.decrypt(RListDU, SK)
-    print(result)
+    print("From server ", *result, sep='\n\t')
 
-
-    RList = []
-    for i in range(len(DV)):
-        Vqc = np.concatenate((DU.global_Vq1, DU.global_Vq2))
-        DVc = np.concatenate((DO.global_DV1[i], DO.global_DV2[i]))
-        similarity = get_score(Vqc, DVc)
-        RList.append((DO.D[i], i, similarity))
-
-    RList = [(d, s) for d, _, s in sorted(RList, key=lambda d: -d[2])][:k]
-    print(RList)
-
-
-    Rlist_original = CS.SSearch(D̃, DV, DO.model.infer_vector(DU.Q), k)
+    Rlist_original = CS.SSearch(D̃, DV, DU.Vq, k)
     result = DU.decrypt(Rlist_original, SK)
-    print(result)
+    print("From  owner ", *result, sep='\n\t')
 
-    Rlist_original = CS.SSearch(D̃, DV, DO.model.infer_vector(DU.Q), k)
-    result = DU.decrypt(Rlist_original, SK)
-    print(result)
+    # for d in DO.model.wv.vocab:
+    #     print(d)
+
+    print(DO.model.wv.most_similar(positive=['photo'], negative=['man']))
 
 
 def get_score(a, b):

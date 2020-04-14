@@ -29,7 +29,7 @@ def practice():
     dimensions = 5
     model = Doc2Vec(size=dimensions, window=1, min_count=1, workers=8,
                     alpha=0.025,
-                    min_alpha=0.01, dm=0)
+                    min_alpha=0.01, dm=0, negative=0)
 
     # build vocabulary
     model.build_vocab(docs)
