@@ -6,9 +6,10 @@ from gensim.models import Doc2Vec
 from numpy import dot, concatenate
 from numpy.linalg import norm
 
+from code.document import Document
 from code.key import SecuredKey
 from code.constants import DIMENSIONS
-from code.model.container import Corpus
+from code.model.model import Corpus
 from definitions import DOCS_DIR
 
 
@@ -17,14 +18,14 @@ class DataOwner:
         # The document set of n documents
         self.documents = []
         for address, dirs, files in os.walk(DOCS_DIR):
-            for file in files:
-                path = os.path.join(address, file)
+            for name in files:
+                path = os.path.join(address, name)
                 with open(path) as f:
                     txt = f.read()
-                    self.documents.append(txt)
+                    self.documents.append(Document(path, name, txt))
 
         # The encrypted document set
-        self.secured_documents = None
+        self.secured_documents = []
 
         # Document vectors
         self.document_vectors = []
@@ -43,7 +44,7 @@ class DataOwner:
         """
 
         for d in self.documents:
-            v = self.model.infer_vector(d.split(' '))
+            v = self.model.infer_vector(d.text.split(' '))
             self.document_vectors.append(v / norm(v))
         return self.document_vectors
 
@@ -81,7 +82,7 @@ class DataOwner:
             index[i] = concatenate((dv1_s, dv2_s))
 
             # Encrypt documents
-            d_s[i] = key.encrypt(self.documents[i].encode())
+            d_s[i] = self.documents[i].encrypt(key)
 
         # TODO Outsources index, d_s to CS
         #      Outsources SK, Model to DU

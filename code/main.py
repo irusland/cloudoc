@@ -1,3 +1,5 @@
+from tabulate import tabulate
+
 from code.constants import k, DIMENSIONS
 from code.key import SecuredKey
 from code.logger.logger import Logger, LogLevel
@@ -8,7 +10,7 @@ from definitions import DEBUG_LOG
 
 
 def main():
-    Logger.configure(level=LogLevel.CONSOLE, debug_path=DEBUG_LOG)
+    Logger.configure(level=LogLevel.LOGGING, debug_path=DEBUG_LOG)
 
     owner = DataOwner()
     user = DataUser()
@@ -24,12 +26,18 @@ def main():
 
     user_result = server.search(secured_documents, index, trapdoor_query_vector, k)
     user_result = user.decrypt(user_result, key)
+    print(tabulate([(s, d) for s, d in user_result],
+                   headers=['Similarity', 'Document form server']))
+    print()
 
     owner_result = server.search(secured_documents, document_vectors, user.query_vector, k)
     owner_result = user.decrypt(owner_result, key)
+    print(tabulate([(s, d) for s, d in owner_result],
+                   headers=['Similarity', 'Document from owner']))
 
     Logger.info(key)
     Logger.info(f'Query "{" ".join(user.query)}"')
+    Logger.info(owner.model.wv.most_similar(positive=['bird']))
     Logger.info(owner.model.infer_vector(user.query))
     Logger.info(trapdoor_query_vector)
 
@@ -38,8 +46,6 @@ def main():
 
     for line in owner_result:
         Logger.info(f'From owner  {line}')
-
-    Logger.info(owner.model.wv.most_similar(positive=['bird']))
 
 
 if __name__ == '__main__':

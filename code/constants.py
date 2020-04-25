@@ -3,6 +3,5 @@ DIMENSIONS = 10
 
 SECRET = 'irusland'
 
-QUERY = 'bird'
 # result list length
 k = 3

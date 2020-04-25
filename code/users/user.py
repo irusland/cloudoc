@@ -5,14 +5,16 @@ from gensim.models import Doc2Vec
 from numpy import dot, concatenate
 from numpy.linalg import norm, inv
 
+from code.document import Document
 from code.key import SecuredKey
-from code.constants import DIMENSIONS, QUERY
+from code.constants import DIMENSIONS
 
 
 class DataUser:
     def __init__(self):
         # The ranked search with multiple queried keywords
-        self.query = QUERY.split(' ')
+        print('Input query')
+        self.query = input().split(' ')
         # The m -dimensional plaintext query feature vector
         self.query_vector = None
         # The m -dimensional trapdoor vector, which is the encrypted form of Vq
@@ -50,8 +52,8 @@ class DataUser:
 
         return vq_s
 
-    def decrypt(self, documents: list, key: SecuredKey):
+    def decrypt(self, documents: [(Document, int)], key: SecuredKey):
         r = []
         for d, s in documents:
-            r.append((s, key.decrypt(d).decode()))
+            r.append((s, d.decrypt(key)))
         return r
