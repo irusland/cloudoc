@@ -15,13 +15,13 @@ from definitions import DOCS_DIR
 class DataOwner:
     def __init__(self):
         # The document set of n documents
-        self.D = []
+        self.documents = []
         for address, dirs, files in os.walk(DOCS_DIR):
             for file in files:
                 path = os.path.join(address, file)
                 with open(path) as f:
                     txt = f.read()
-                    self.D.append(txt)
+                    self.documents.append(txt)
 
         # The encrypted document set
         self.secured_documents = None
@@ -35,32 +35,31 @@ class DataOwner:
         self._container = Corpus()
         self.model: Doc2Vec = self._container.model
 
-    def get_vectors(self, documents) -> list:
+    def get_vectors(self) -> list:
         """
         get m -dimensional feature vector DVi for each document di
         :param documents: Documents
         :return: Document vectors
         """
 
-        for d in documents:
+        for d in self.documents:
             v = self.model.infer_vector(d.split(' '))
             self.document_vectors.append(v / norm(v))
         return self.document_vectors
 
-    def encrypt_data(self, key: SecuredKey, doc_vectors: list, docs: list):
+    def encrypt_data(self, key: SecuredKey, doc_vectors: list):
         """
         encrypt DV and D by SK and generates the secure index index
         and encrypted documents d_s
         :param key: Secure key
         :param doc_vectors: Document Vectors
-        :param docs: Documents
         :return: (index, d_s) where index={DV′⋅M1^T, DV″⋅M2^T}
         """
-        dv1 = [None] * len(self.D)
-        dv2 = [None] * len(self.D)
-        d_s = [None] * len(self.D)
-        index = [None] * len(self.D)
-        for i in range(len(self.D)):
+        dv1 = [None] * len(self.documents)
+        dv2 = [None] * len(self.documents)
+        d_s = [None] * len(self.documents)
+        index = [None] * len(self.documents)
+        for i in range(len(self.documents)):
             # Separate vectors
             dv1[i] = [.0] * DIMENSIONS
             dv2[i] = [.0] * DIMENSIONS
@@ -82,7 +81,7 @@ class DataOwner:
             index[i] = concatenate((dv1_s, dv2_s))
 
             # Encrypt documents
-            d_s[i] = key.encrypt(docs[i].encode())
+            d_s[i] = key.encrypt(self.documents[i].encode())
 
         # TODO Outsources index, d_s to CS
         #      Outsources SK, Model to DU

@@ -16,11 +16,11 @@ def main():
 
     key = SecuredKey(DIMENSIONS)
 
-    document_vectors = owner.get_vectors(owner.D)
+    document_vectors = owner.get_vectors()
 
-    index, secured_documents = owner.encrypt_data(key, document_vectors, owner.D)
+    index, secured_documents = owner.encrypt_data(key, document_vectors)
 
-    trapdoor_query_vector = user.get_query_vector(user.query, key, owner.model)
+    trapdoor_query_vector = user.get_query_vector(key, owner.model)
 
     user_result = server.search(secured_documents, index, trapdoor_query_vector, k)
     user_result = user.decrypt(user_result, key)
@@ -31,8 +31,6 @@ def main():
     Logger.info(key)
     Logger.info(f'Query "{" ".join(user.query)}"')
     Logger.info(owner.model.infer_vector(user.query))
-    # Logger.info(I)
-    # Logger.info(D̃)
     Logger.info(trapdoor_query_vector)
 
     for line in user_result:

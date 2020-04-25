@@ -13,14 +13,12 @@ class DataUser:
     def __init__(self):
         # The ranked search with multiple queried keywords
         self.query = QUERY.split(' ')
-
         # The m -dimensional plaintext query feature vector
         self.query_vector = None
-
         # The m -dimensional trapdoor vector, which is the encrypted form of Vq
         self.secured_query_vector = None
 
-    def get_query_vector(self, query: list, key: SecuredKey, model: Doc2Vec):
+    def get_query_vector(self, key: SecuredKey, model: Doc2Vec):
         """
         generates the trapdoor vector vq_s
         :param model: Doc2Vec model
