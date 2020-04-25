@@ -1,4 +1,3 @@
-import logging
 import base64
 import logging
 import os
@@ -24,24 +23,6 @@ class Corpus:
     FILENAME = "word2vec.model"
     RETRAIN = False
     SAVE = True
-
-    # Needs to be a large data set
-    # DOCUMENTS = [
-    #     "Human machine interface for lab abc computer applications",
-    #     "A survey of user opinion of computer system response time",
-    #     "The EPS user interface management system",
-    #     "System and human system engineering testing of EPS",
-    #     "Relation of user perceived response time to error measurement",
-    #     "The generation of random binary unordered trees",
-    #     "The intersection graph of paths in trees",
-    #     "Graph minors IV Widths of trees and well quasi ordering",
-    #     "Human computer interaction Graph minors A survey human computer",
-    #     "interaction with man",
-    #     "human practice with the computer",
-    #     "kitesurfing is a beautiful sport to practice",
-    #     "kite is a flying item",
-    #     "you can also use foil board with kite",
-    # ]
 
     def __init__(self):
         logging.basicConfig(format="%(levelname)s - %(asctime)s: %(message)s",

@@ -1,0 +1,4 @@
+numpy
+cryptography
+gensim==3.8.0
+smart-open==1.10.0

@@ -1,7 +1,3 @@
-import time
-
-from gensim.models.doc2vec import Doc2Vec
-from nltk.tokenize import word_tokenize
 import gensim.downloader as api
 
 
