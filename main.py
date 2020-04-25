@@ -1,28 +1,22 @@
-import json
+import logging
+import base64
 import logging
 import os
-import base64
 import random
 
 import gensim
 import numpy as np
-from gensim.models import KeyedVectors
-
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
-from gensim.test.utils import common_texts
-from nltk.tokenize import word_tokenize
-
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
-from numpy.linalg import inv, norm
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from numpy import dot, concatenate
+from numpy.linalg import inv, norm
+
+from definitions import TXT_DIR
 
 # todo change here need retraining model! loaded will contain old M
-from definitions import ROOT_DIR, TXT_DIR
-
 M = 10
 
 
@@ -74,7 +68,7 @@ class Corpus:
                                  size=M,
                                  window=10,
                                  min_count=2,
-                                 workers=4)  # negative=0 to avoid
+                                 workers=8)  # negative=0 to avoid
                                                # randomisation of infervector
 
             # self.model.build_vocab(documents)
@@ -241,7 +235,7 @@ class DataOwner:
 
 class DataUser:
     def __init__(self):
-        query = 'story'
+        query = 'bird'
 
         # The ranked search with multiple queried keywords
         self.Q = query.split(' ')
@@ -346,7 +340,7 @@ def main():
     # for d in DO.model.wv.vocab:
     #     print(d)
 
-    print(DO.model.wv.most_similar(positive=['photo'], negative=['man']))
+    print(DO.model.wv.most_similar(positive=['bird']))
 
 
 def get_score(a, b):
