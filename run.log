@@ -1,16 +1,16 @@
-INFO - 18:41:12: Loaded from /Users/irusland/iCloudDrive(Archive)first/Desktop/UrFU/python/cloudoc/code/model/word2vec.model
-INFO - 18:41:16: <code.key.SecuredKey object at 0x121fe4f90>
-INFO - 18:41:16: Query "cock"
-INFO - 18:41:16: [('soundly', 0.9542763233184814), ('easiest', 0.9455597996711731), ('harsh', 0.9425677061080933), ('pheasant', 0.9348658323287964), ('supplemented', 0.927287220954895), ('artificial', 0.9235803484916687), ('sportsman', 0.9136532545089722), ('most', 0.9121627807617188), ('creature', 0.9111831784248352), ('uttered', 0.9094113111495972)]
-INFO - 18:41:16: [ 0.11900619 -0.0064342   0.02127778  0.14166486  0.12536418  0.01953125
- -0.0510621  -0.04807893 -0.12076974  0.04365503]
-INFO - 18:41:16: [ 0.3784297   1.49715985 -0.51461814 -0.30388311 -0.22001185  1.84616405
-  0.61401372 -0.40545557  0.12419057  0.46180186  0.26253232 -0.04010485
- -3.21127944  0.31043904 -2.34426528  1.60234666 -0.46790012 -3.10024892
-  0.85590237  0.69149042]
-INFO - 18:41:16: From server (0.6679121729362558, <code.document.Document object at 0x1227b2690>)
-INFO - 18:41:16: From server (0.42997231700589356, <code.document.Document object at 0x1227b2550>)
-INFO - 18:41:16: From server (0.3411813040639989, <code.document.Document object at 0x1227b25d0>)
-INFO - 18:41:16: From owner  (0.6679122, <code.document.Document object at 0x1227b26d0>)
-INFO - 18:41:16: From owner  (0.42997232, <code.document.Document object at 0x1227b2810>)
-INFO - 18:41:16: From owner  (0.3411813, <code.document.Document object at 0x1227b2410>)
+INFO - 12:46:48: Loaded from /Users/irusland/iCloudDrive(Archive)first/Desktop/UrFU/python/cloudoc/code/model/word2vec.model
+INFO - 12:46:56: <code.key.SecuredKey object at 0x11df20610>
+INFO - 12:46:56: Query "proccess of photo"
+INFO - 12:46:56: [('soundly', 0.9542763233184814), ('easiest', 0.9455597996711731), ('harsh', 0.9425677061080933), ('pheasant', 0.9348658323287964), ('supplemented', 0.927287220954895), ('artificial', 0.9235803484916687), ('sportsman', 0.9136532545089722), ('most', 0.9121627807617188), ('creature', 0.9111831784248352), ('uttered', 0.9094113111495972)]
+INFO - 12:46:56: [ 0.07360401 -0.09541898  0.08730661  0.16983464  0.20040241  0.00634895
+ -0.09574053 -0.06988874 -0.07645372 -0.03548623]
+INFO - 12:46:56: [-0.22216942  0.66388172 -0.44797213  0.57998322  0.08735482 -0.13748516
+  0.1764902  -0.49132911 -0.26342529 -0.37029418  0.34248669 -0.35786929
+  0.01748245  0.19553208  0.11734661 -0.17382428  0.08313563  0.09628844
+  0.12378683  0.26381687]
+INFO - 12:46:56: From server (0.6972149825386496, <code.document.Document object at 0x11e8e56d0>)
+INFO - 12:46:56: From server (0.45117357944382397, <code.document.Document object at 0x11e8e5410>)
+INFO - 12:46:56: From server (0.44377662581775856, <code.document.Document object at 0x11e8e54d0>)
+INFO - 12:46:56: From owner  (0.69721496, <code.document.Document object at 0x11e8e5850>)
+INFO - 12:46:56: From owner  (0.45117357, <code.document.Document object at 0x11e8e5210>)
+INFO - 12:46:56: From owner  (0.4437766, <code.document.Document object at 0x11e8e5450>)
